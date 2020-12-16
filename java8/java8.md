@@ -30,3 +30,7 @@ R apply(T t);
 ```
 BiFunction
 ```
+
+#### 2.3  @FunctionInterface
+
+表示这个方法可以被lambda简化

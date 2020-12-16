@@ -4,7 +4,7 @@
 
 ```
 redis-cli -h 172.16.6.223 -a winning.2019
-
+redis-cli -h 172.16.0.154 -a winning.2019
 查询所有的发布订阅：PUBSUB CHANNELS
 
 订阅消息：SUBSCRIBE "1010:master_data_subscription"
