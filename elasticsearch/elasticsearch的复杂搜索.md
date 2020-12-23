@@ -1,399 +1,5 @@
 ## ElasticSearch的复合搜索
 
-### 1.准备工作
-
-#### 1.1.创建索引
-
-```
-PUT books
-{
-  "mappings": {
-   "properties": {
-     "name":{
-       "type":"text",
-       "analyzer": "ik_max_word"
-     },
-     "publish":{
-       "type":"text",
-        "analyzer": "ik_max_word"
-     },
-     "type":{
-        "type":"text",
-        "analyzer": "ik_max_word"
-     },
-     "author":{
-        "type":"keyword"
-      },
-      "info":{
-        "type":"text",
-        "analyzer": "ik_max_word"
-      },
-      "price":{
-        "type":"double"      
-      }
-   } 
-  } 
-}
-```
-
-#### 1.2导入数据
-
-```
-curl -XPOST "http://localhost:9200/books/_bulk?pretty" -H "content-type:application/json" --data-binary @bookdata.json
-```
-
-### 2.简单搜索
-
-#### 2.1 match_all
-
-所有的查询都写在query里面，默认查询10条记录
-
-```
-GET books/_search
-{
-  "query":{
-    "match_all":{}
-  }
-}
-```
-
-#### 2.2 term
-
-只能查询词语，不能全局查询，会跟分词去比较，不会全局比较；
-
-```
-GET books/_search
-{
-  "query":{
-    "term": {
-        "name": "十一五"
-      }
-  }
-}
-```
-
-#### 2.3.分页查询
-
-```
-GET books/_search
-{
-  "query":{
-    "term": {
-        "name": "十一五"
-      }
-  },
-  "size": 20,
-  "from": 10
-}
-```
-
-#### 2.4.指定返回的字段
-
-```
-GET books/_search
-{
-  "query":{
-    "term": {
-        "name": "十一五"
-      }
-  },
-  "size": 20,
-  "from": 10,
-  "_source": ["name","author"]
-}
-```
-
-#### 2.5 高亮搜索
-
-```
-GET books/_search
-{
-  "query":{
-    "term": {
-        "name": "十一五"
-      }
-  },
-  "size": 20,
-  "from": 10,
-  "highlight": {
-    "fields": {"name":{}}
-  }
-}
-```
-
-#### 2.6 match
-
-Match query先对查询语句进行分词，如果分词后的任何一个词项被索引到，就会被查到。
-
-默认关系是or的关系，可以修改为and的关系；
-
-```
-GET books/_search
-{
-  "query":{
-    "match": {
-        "name": "美术计算机"
-      }
-  }
-}
-
-GET books/_search
-{
-  "query":{
-    "match": {
-        "name": {
-        	"query":"美术计算机",
-        	"operator":"and"
-        }
-      }
-  }
-}
-```
-
-#### 2.7 match_phrase
-
-match_phrase query也会对查询的关键字进行分词，但是它分词后有两个特点：
-
-a.分词是and的关系
-
-b.分词的顺序一致
-
-可以修改为and的关系；
-
-```
-GET books/_search
-{
-  "query":{
-    "match_phrase": {
-        "name": "十一五计算机",
-        "slop":8
-      }
-  }
-}
-```
-
-#### 2.8 match_phrase_prefix
-
-类似match_phrase query，多了一个匹配符，效率低（了解即可）
-
-```
-GET books/_search
-{
-  "query":{
-    "match_phrase_prefix": {
-        "name": "计"
-      }
-  }
-}
-```
-
- max_expansion可以指定查询分词的数目,如果max_expansion为1，可能返回多个文档，但是只有一个词，这是我们预期的结果，有时候返回结果和我们预期结果不一致，因为这个查询是分片级别的，不同的分片确实只返回了一个词，但是结果可能来自不同的分片，所以看到了多个词。
-
-```
-GET books/_search
-{
-  "query":{
-    "match_phrase_prefix": {
-        "name": "计",
-        "max_expansion":3
-      }
-  }
-}
-```
-
-#### 2.9 multi_match
-
-match的升级版本,^表示权重
-
-```
-GET books/_search
-{
-  "query":{
-    "multi_match": {
-        "query": "java",
-        "field":["name^4","info"]
-      }
-  }
-}
-```
-
-#### 2.10 query_string 
-
-紧密结合Lucene的查询方式
-
-```
-GET books/_search
-{
-  "query":{
-    "query_string": {
-        "default_field": "name",
-        "query":"(十一五) AND (计算机)"
-      }
-  }
-}
-```
-
-#### 2.11 simple_query_string
-
-紧密结合Lucene的查询方式,+和-代替AND,OR,NOT等
-
-```
-GET books/_search
-{
-  "query":{
-    "simple_query_string": {
-        "fields": ["name"],
-        "query":"(十一五) + (计算机)"
-      }
-  }
-}
-```
-
-#### 2.12 terms
-
-多个terms的查询
-
-```
-GET books/_search
-{
-  "query":{
-    "terms": {
-        "name": ["程序","java"]
-      }
-  }
-}
-```
-
-#### 2.13 range
-
-范围查询，可以按照日期，数字范围等查询；
-
-range query的参数主要有四个：gt,lt,gte,lte
-
-```
-GET books/_search
-{
-  "query":{
-    "range": {
-        "price": {
-        	"gte":10,
-        	"lte":20
-        }
-      }
-  },
-  "sort":{
-    "price":{
-      "order":"desc"
-    }
-  }
-}
-```
-
-#### 2.14  exists
-
-返回指定字段至少有一个字段不为空值的文档，空字符串也为有值
-
-```
-GET books/_search
-{
- "query": {
-  "exists": {
-   "field": "javaboy"
-  }
- }
-}
-```
-
-#### 2.15 prefix
-
-前缀查询，效率低
-
-```
-GET books/_search
-{
-  "query": {
-    "prefix": {
-      "name": {
-        "value": "大学"
-      }
-    }
-  }
-}
-```
-
-#### 2.16 wildcard
-
-通配符查询，支持单字符和多字符通配符查询
-
-？表示一个任意字符， *表示零个或者多个字符
-
-```
-GET books/_search
-{
-  "query": {
-    "wildcard": {
-      "author": {
-        "value": "张?"
-      }
-    }
-  }
-}
-```
-
-#### 2.17  regexp
-
-正则表达式查询
-
-```
-GET books/_search
-{
- "query": {
-  "regexp": {
-   "author": "张."
-  }
- }
-}
-```
-
-#### 2.18 fuzzy query
-
-在实际搜索中，有时我们可能会打错字，从而导致搜索不到，在 match query 中，可以通过 fuzziness 属性实现模糊查询。
-
-fuzzy query 返回与搜索关键字相似的文档。怎么样就算相似？以LevenShtein 编辑距离为准。编辑距离是指将一个字符变为另一个字符所需要更改字符的次数，更改主要包括四种：
-
-- 更改字符（javb--〉java）
-- 删除字符（javva--〉java）
-- 插入字符（jaa--〉java）
-- 转置字符（ajva--〉java）
-
-为了找到相似的词，模糊查询会在指定的编辑距离中创建搜索关键词的所有可能变化或者扩展的集合，然后进行搜索匹配。
-
-```
-GET books/_search
-{
- "query": {
-  "fuzzy": {
-   "name": "jaav"
-  }
- }
-}
-```
-
-#### 2.19 ids查询
-
-根据指定的 id 查询。
-
-```
-GET books/_search
-{
-  "query": {
-    "ids":{
-      "values":  [1,2111,3111]
-    }
-  }
-}
-```
-
 ### 3.复合查询
 
 #### 3.1.constant_score查询
@@ -578,3 +184,276 @@ GET blog/_search
 在 dis_max query 中，还有一个参数 `tie_breaker`（取值在0～1），在 dis_max query 中，是完全不考虑其他 query 的分数，只是将最佳匹配的字段的评分返回。但是，有的时候，我们又不得不考虑一下其他 query 的分数，此时，可以通过 `tie_breaker` 来优化 dis_max query。`tie_breaker` 会将其他 query 的分数，乘以 `tie_breaker`，然后和分数最高的 query 进行一个综合计算。
 
 #### 3.4 function_score 查询
+
+自定义得分函数
+
+场景：例如想要搜索附近的肯德基，搜索的关键字是肯德基，但是我希望能够将评分较高的肯德基优先展示出来。但是默认的评分策略是没有办法考虑到餐厅评分的，他只是考虑相关性，这个时候可以通过 function_score query 来实现;
+
+默认情况下，id 为 2 的记录得分较高，因为他的 title 中包含两个 java。
+
+如果我们在查询中，希望能够充分考虑 votes 字段，将 votes 较高的文档优先展示，就可以通过 function_score 来实现。
+
+具体的思路，就是在旧的得分基础上，根据 votes 的数值进行综合运算，重新得出一个新的评分。
+
+具体有几种不同的计算方式：
+
+- weight
+- random_score
+- script_score
+- field_value_factors
+
+##### 3.4.1 weight （少用）
+
+weight 可以对评分设置权重，就是在旧的评分基础上乘以 weight，并不能解决问题（少用 ）
+
+```
+GET blog/_search
+{
+ "query": {
+  "function_score": {
+   "query": {
+    "match": {
+     "title": "java"
+    }
+   },
+   "functions": [
+    {
+     "weight": 10
+    }
+   ]
+  }
+ }
+}
+```
+
+##### 3.4.2 **random_score**（少用）
+
+`random_score` 会根据 uid 字段进行 hash 运算，生成分数，使用 `random_score` 时可以配置一个种子，如果不配置，默认使用当前时间。
+
+```
+GET blog/_search
+{
+ "query": {
+  "function_score": {
+   "query": {
+    "match": {
+     "title": "java"
+    }
+   },
+   "functions": [
+    {
+     "random_score": {}
+    }
+   ]
+  }
+ }
+}
+```
+
+##### 3.4.3 script_score
+
+自定义评分脚本。假设每个文档的最终得分是旧的分数加上votes。查询方式如下，现在，最终得分是 `(oldScore+votes)*oldScore`。
+
+```
+GET blog/_search
+{
+  "query": {
+    "function_score": {
+      "query": {
+        "match": {
+          "title": "java"
+        }
+      },
+      "functions": [
+        {
+          "script_score": {
+            "script": {
+              "lang": "painless",
+              "source": "_score + doc['votes'].value"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+如果不想乘以 oldScore，查询方式如下：
+
+```
+GET blog/_search
+{
+  "query": {
+    "function_score": {
+      "query": {
+        "match": {
+          "title": "java"
+        }
+      },
+      "functions": [
+        {
+          "script_score": {
+            "script": {
+              "lang": "painless",
+              "source": "_score + doc['votes'].value"
+            }
+          }
+        }
+      ],
+      "boost_mode": "replace"
+    }
+  }
+}
+```
+
+通过 `boost_mode` 参数，可以设置最终的计算方式。该参数还有其他取值：
+
+- multiply：分数相乘
+- sum：分数相加
+- avg：求平均数
+- max：最大分
+- min：最小分
+- replace：不进行二次计算
+
+##### 3.4.4 **field_value_factor**（常用）
+
+这个的功能类似于 `script_score`，但是不用自己写脚本。
+
+假设每个文档的最终得分是旧的分数乘以votes。查询方式如下，默认的得分就是`oldScore*votes`。
+
+```
+GET blog/_search
+{
+  "query": {
+    "function_score": {
+      "query": {
+        "match": {
+          "title": "java"
+        }
+      },
+      "functions": [
+        {
+          "field_value_factor": {
+            "field": "votes"
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+还可以利用 es 内置的函数进行一些更复杂的运算，此时，最终的得分是（sqrt(votes)）。
+
+```
+GET blog/_search
+{
+  "query": {
+    "function_score": {
+      "query": {
+        "match": {
+          "title": "java"
+        }
+      },
+      "functions": [
+        {
+          "field_value_factor": {
+            "field": "votes",
+            "modifier": "sqrt"
+          }
+        }
+      ],
+      "boost_mode": "replace"
+    }
+  }
+}
+```
+
+![image-20201216214923459](/Users/qinkai/Library/Application Support/typora-user-images/image-20201216214923459.png)
+
+另外还有个参数 factor ，影响因子。字段值先乘以影响因子，然后再进行计算。以 sqrt 为例，计算方式为 `sqrt(factor*votes)`：
+
+```
+GET blog/_search
+{
+ "query": {
+  "function_score": {
+   "query": {
+    "match": {
+     "title": "java"
+    }
+   },
+   "functions": [
+    {
+     "field_value_factor": {
+      "field": "votes",
+      "modifier": "sqrt",
+      "factor": 10
+     }
+    }
+   ],
+   "boost_mode": "replace"
+  }
+ }
+}
+```
+
+还有一个参数 `max_boost`，控制计算结果的范围：
+
+```
+GET blog/_search
+{
+  "query": {
+    "function_score": {
+      "query": {
+        "match": {
+          "title": "java"
+        }
+      },
+      "functions": [
+        {
+          "field_value_factor": {
+            "field": "votes"
+          }
+        }
+      ],
+      "boost_mode": "sum",
+      "max_boost": 100
+    }
+  }
+}
+```
+
+`max_boost` 参数表示 functions 模块中，最终的计算结果上限。如果超过上限，就按照上线计算。
+
+#### 3.5 boosting 查询
+
+boosting query 中包含三部分：
+
+- positive：得分不变
+- negative：降低得分
+- negative_boost：降低的权重
+
+```
+GET books/_search
+{
+ "query": {
+  "boosting": {
+   "positive": {
+    "match": {
+     "name": "java"
+    }
+   },
+   "negative": {
+    "match": {
+     "name": "2008"
+    }
+   },
+   "negative_boost": 0.5
+  }
+ }
+}
+```
+
+可以看到，id 为 86 的文档满足条件，因此它的最终得分在旧的分数上`*0.5`。
