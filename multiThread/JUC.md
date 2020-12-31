@@ -30,13 +30,13 @@ unpark:
 
 #### 2.1 特点：
 
-a.可中断；
+a.可中断；通过设置lock.lockInterruptibly()来实现这个机制。
 
 b.可以设置为公平锁；
 
-c.可以设置超时时间；
+c.可以设置超时时间；lock.tryLock(1,TimeUnit.second)
 
-d.支持多个条件变量；
+d.支持多个条件变量；condition，可以实现wait和notify类似的指定线程通知；
 
 e.与synchronized一样，支持可重入；（可以再次获得这把锁）
 
