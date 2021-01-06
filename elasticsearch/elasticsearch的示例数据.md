@@ -1,6 +1,6 @@
 ## ElasticSearch
 
-### 1.安装elasticsearch
+### 1.elasticsearch的增删改查
 
 ```
 PUT blog/_doc/1
