@@ -42,6 +42,18 @@ e.与synchronized一样，支持可重入；（可以再次获得这把锁）
 
 #### 2.2 与synchronized的区别
 
+### 3.CountDownLatch
+
+门栓，可以控制线程执行的顺序，实现线程间的同步
+
+### 4.CyclicBarrier
+
+可以执行分段任务有序执行的场景。
+
+### 5.Semaphore
+
+递增的                                                  
+
 
 
 
