@@ -52,7 +52,51 @@ e.与synchronized一样，支持可重入；（可以再次获得这把锁）
 
 ### 5.Semaphore
 
-递增的                                                  
+递增的，用来限制能同时访问共享资源的线程上限；      
+
+代码实例：
+
+```java
+Semaphore semaphore = new Semaphore(0);
+List<Integer> list = new ArrayList<>();
+Thread t1 = new Thread(() -> {
+    try {
+        for (int i = 0; i < 100000; i++) {
+            list.add(1);
+        }
+        System.out.println("A:thread t1 end");
+        semaphore.release();
+    } catch (Exception e) {
+        e.printStackTrace();
+        System.out.println("B:thread t1 end");
+        semaphore.release();
+    }
+});
+Thread t2 = new Thread(() -> {
+    try {
+        for (int i = 0; i < 100000; i++) {
+            list.add(1);
+        }
+        System.out.println("A:thread t2 end");
+        semaphore.release();
+    } catch (Exception e) {
+        System.out.println("B:thread t2 end");
+        e.printStackTrace();
+        semaphore.release();
+    }
+});
+t1.start();
+t2.start();
+System.out.println("here---");
+semaphore.acquire(2);
+System.out.println("预计list的size为：200000");
+System.out.println("实际list的size为：" + list.size());
+if (semaphore.getQueueLength() == 0) {
+    System.out.println("main:here");
+}
+```
+
+​                                            
 
 
 
