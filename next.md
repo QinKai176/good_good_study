@@ -6,6 +6,14 @@ Java 工程师面试突击第 1 季-中华石杉老师
 
 springboot的启动机制
 
+
+
+bilibili  springsecurity视频
+
+
+
+rabbitmq  江南一点雨
+
 ### 2.chapter2
 
 二、准备过程 + 复习计划
