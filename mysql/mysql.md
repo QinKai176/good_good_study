@@ -3,9 +3,9 @@
 1.mysql的安装
 
 ```
-docker pull mysql:5.6
+docker pull mysql:5.7
 
-docker run -p 3306:3306 --name mysql -e MYSQL_ROOT_PASSWORD=qq1234 -d mysql:5.6
+docker run -p 3306:3306 --name mysql -e MYSQL_ROOT_PASSWORD=qq1234 -d mysql:5.7
 ```
 
 
