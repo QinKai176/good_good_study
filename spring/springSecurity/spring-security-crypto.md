@@ -19,42 +19,17 @@ crypto
 
 
 
-### 2.类
+### 3.包
 
-获取用户信息：
+org.springframework.security.crypto
 
-org.springframework.security.core.userdetails.User;
+3.1 bycrpt
 
-org.springframework.security.core.userdetails.UserDetailsService;
+能防止ranibow table attack
 
-校验账号密码：
+3.2 codec
 
-org.springframework.security.authentication.dao.AbstractUserDetailsAuthenticationProvider
-
-
-
-oauth2:
-
-org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter ;
-
-org.springframework.security.oauth2.provider.client.BaseClientDetails;
-
-org.springframework.security.oauth2.provider.ClientDetailsService;
+https://blog.csdn.net/smilejiasmile/article/details/96311277
 
 
 
-异常：
-
-org.springframework.security.oauth2.common.exceptions.OAuth2Exception;
-
-org.springframework.security.web.authentication.AuthenticationFailureHandler;
-
-com.winning.base.middleend.oauth2.handler.WinAuthenticationSuccessHandler;
-
-
-
-
-
-### 3.注解
-
-@interface EnableAuthorizationServer
