@@ -28,9 +28,26 @@ R apply(T t);
 #### 2.2 BiFunction
 
 ```
-BiFunction
+BiFunction 能传两个参数
 ```
 
 #### 2.3  @FunctionInterface
 
 表示这个方法可以被lambda简化
+
+#### 2.4 使用举例
+
+```java
+    static Function<Integer, Integer> addOne = k -> k + 1;
+
+    static BiConsumer<Integer, Integer> consumer = (t1, t2) -> {
+        System.out.println("最初的值为：" + t1);
+        System.out.println("处理之后的值为：" + t2);
+    };
+
+    public static void main(String[] args) {
+        consumer.accept(22, addOne.apply(22));
+
+    }
+```
+
